@@ -1,0 +1,34 @@
+buildscript {
+    ext {
+        springBootVersion = '2.6.2'
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+    }
+}
+
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version "${springBootVersion}"
+}
+
+group 'de.com.fdm'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation("org.springframework.boot:spring-boot-starter:${springBootVersion}")
+    implementation("org.springframework.boot:spring-boot-starter-data-mongodb:${springBootVersion}")
+    implementation('net.devh:grpc-server-spring-boot-starter:2.13.0.RELEASE')
+    implementation('de.com.fdm:TmiReceiverInterface:1.0-SNAPSHOT')
+    implementation("com.github.twitch4j:twitch4j:1.7.0")
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+}
+
+test {
+    useJUnitPlatform()
+}
