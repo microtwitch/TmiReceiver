@@ -4,16 +4,18 @@ services:
   mongo:
     image: mongo
     container_name: tmi-receiver-mongo
+    ports:
+      - "27017:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: test 
       MONGO_INITDB_ROOT_PASSWORD: test
   mongo-express:
     image: mongo-express
     container_name: tmi-receiver-mongo-express
-    depends_on:
-      - "tmi-receiver-mongo"
     ports:
       - "8081:8081"
+    depends_on:
+      - "mongo"
     environment:
       ME_CONFIG_MONGODB_ADMINUSERNAME: test
       ME_CONFIG_MONGODB_ADMINPASSWORD: test
