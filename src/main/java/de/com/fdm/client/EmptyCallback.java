@@ -10,6 +10,7 @@ public class EmptyCallback implements StreamObserver<Empty> {
 
     @Override
     public void onError(Throwable t) {
+        System.out.println(t.getMessage());
     }
 
     @Override

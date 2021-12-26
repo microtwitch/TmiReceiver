@@ -26,17 +26,17 @@ public class ReceiverServiceImpl extends ReceiverGrpc.ReceiverImplBase {
         Consumer existingConsumer = this.consumerRepository.findByCallback(request.getCallback());
 
         if (existingConsumer == null) {
-            this.consumerRepository.save(new Consumer(request.getChannel(), request.getCallback()));
-            this.reader.joinChannel(request.getChannel());
+            this.consumerRepository.save(new Consumer(request.getChannelsList().stream().toList(), request.getCallback()));
+            this.reader.joinChannel(request.getChannelsList().stream().toList());
 
             responseObserver.onNext(response);
             responseObserver.onCompleted();
             return;
         }
 
-        existingConsumer.addChannel(request.getChannel());
+        existingConsumer.addChannel(request.getChannelsList().stream().toList());
         this.consumerRepository.save(existingConsumer);
-        this.reader.joinChannel(request.getChannel());
+        this.reader.joinChannel(request.getChannelsList().stream().toList());
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();

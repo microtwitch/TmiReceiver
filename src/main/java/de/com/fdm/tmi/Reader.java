@@ -41,10 +41,12 @@ public class Reader {
         }
     }
 
-    public void joinChannel(String channel) {
-        if (this.client.getChat().getChannels().contains(channel)) {
-            return;
+    public void joinChannel(List<String> channels) {
+        for (String channel : channels) {
+            if (this.client.getChat().getChannels().contains(channel)) {
+                continue;
+            }
+            this.client.getChat().joinChannel(channel);
         }
-        this.client.getChat().joinChannel(channel);
     }
 }
