@@ -41,7 +41,7 @@ public class Reader {
         }
     }
 
-    public void joinChannel(List<String> channels) {
+    public void joinChannels(List<String> channels) {
         for (String channel : channels) {
             if (this.client.getChat().getChannels().contains(channel)) {
                 continue;
