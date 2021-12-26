@@ -4,7 +4,7 @@ import com.github.twitch4j.TwitchClient;
 import com.github.twitch4j.TwitchClientBuilder;
 import com.github.twitch4j.chat.events.channel.ChannelMessageEvent;
 import de.com.fdm.client.ClientManager;
-import de.com.fdm.grpc.lib.TwitchMessage;
+import de.com.fdm.grpc.receiver.lib.TwitchMessage;
 import de.com.fdm.mongo.Consumer;
 import de.com.fdm.mongo.ConsumerRepository;
 import org.springframework.beans.factory.annotation.Autowired;

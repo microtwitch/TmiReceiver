@@ -1,8 +1,8 @@
 package de.com.fdm.service;
 
-import de.com.fdm.grpc.lib.Empty;
-import de.com.fdm.grpc.lib.ReceiverGrpc;
-import de.com.fdm.grpc.lib.Registration;
+import de.com.fdm.grpc.receiver.lib.Empty;
+import de.com.fdm.grpc.receiver.lib.ReceiverGrpc;
+import de.com.fdm.grpc.receiver.lib.Registration;
 import de.com.fdm.mongo.Consumer;
 import de.com.fdm.mongo.ConsumerRepository;
 import de.com.fdm.tmi.Reader;

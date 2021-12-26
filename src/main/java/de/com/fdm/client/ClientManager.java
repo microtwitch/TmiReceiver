@@ -1,6 +1,6 @@
 package de.com.fdm.client;
 
-import de.com.fdm.grpc.lib.TwitchMessage;
+import de.com.fdm.grpc.receiver.lib.TwitchMessage;
 
 import java.util.HashMap;
 

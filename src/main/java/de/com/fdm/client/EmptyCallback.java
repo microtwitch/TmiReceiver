@@ -1,6 +1,7 @@
 package de.com.fdm.client;
 
-import de.com.fdm.grpc.lib.Empty;
+
+import de.com.fdm.grpc.receiver.lib.Empty;
 import io.grpc.stub.StreamObserver;
 
 public class EmptyCallback implements StreamObserver<Empty> {

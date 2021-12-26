@@ -1,7 +1,7 @@
 package de.com.fdm.client;
 
-import de.com.fdm.grpc.lib.ConsumerGrpc;
-import de.com.fdm.grpc.lib.TwitchMessage;
+import de.com.fdm.grpc.receiver.lib.ConsumerGrpc;
+import de.com.fdm.grpc.receiver.lib.TwitchMessage;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
