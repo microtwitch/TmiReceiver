@@ -5,6 +5,8 @@ import org.bson.types.ObjectId;
 import java.util.List;
 
 public class Consumer {
+    // important to be able to save Consumer again without creating copies
+    // mongodb driver uses id for identification
     private ObjectId _id;
     private final List<String> channels;
     private final String callback;
