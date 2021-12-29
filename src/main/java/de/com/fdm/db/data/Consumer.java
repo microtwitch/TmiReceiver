@@ -1,6 +1,8 @@
 package de.com.fdm.db.data;
 
 
+import com.google.protobuf.ProtocolStringList;
+
 import javax.persistence.*;
 import java.util.Set;
 
@@ -22,6 +24,12 @@ public class Consumer {
             inverseJoinColumns = @JoinColumn(name = "channel_id")
     )
     private Set<Channel> channels;
+
+    public void addChannels(ProtocolStringList channels) {
+        for (String channel : channels) {
+            this.channels.add(new Channel(channel));
+        }
+    }
 
     public Long getId() {
         return id;

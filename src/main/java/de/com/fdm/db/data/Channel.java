@@ -1,6 +1,7 @@
 package de.com.fdm.db.data;
 
 import javax.persistence.*;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
@@ -51,5 +52,20 @@ public class Channel {
 
     public void setConsumers(Set<Consumer> consumers) {
         this.consumers = consumers;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Channel channel = (Channel) o;
+        return name.equals(channel.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name);
     }
 }

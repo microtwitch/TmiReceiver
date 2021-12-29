@@ -26,9 +26,18 @@ public class ReceiverServiceImpl extends ReceiverGrpc.ReceiverImplBase {
 
     @Override
     public void register(Registration request, StreamObserver<Empty> responseObserver) {
-        Empty response = Empty.newBuilder().build();
+        Consumer consumer = this.consumerService.findByCallback(request.getCallback());
+        if (consumer != null) {
+            consumer.addChannels(request.getChannelsList());
+            this.consumerService.saveConsumer(consumer);
 
-        Consumer consumer = new Consumer();
+            Empty response = Empty.newBuilder().build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+            return;
+        }
+
+        consumer = new Consumer();
         consumer.setCallback(request.getCallback());
 
         Set<Channel> channels = new HashSet<>();
@@ -41,6 +50,7 @@ public class ReceiverServiceImpl extends ReceiverGrpc.ReceiverImplBase {
 
         this.reader.joinChannels(channels);
 
+        Empty response = Empty.newBuilder().build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }

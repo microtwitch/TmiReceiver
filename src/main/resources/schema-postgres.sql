@@ -4,12 +4,12 @@ DROP TABLE IF EXISTS channel;
 
 CREATE TABLE consumer (
     consumer_id serial PRIMARY KEY,
-    callback VARCHAR(255) NOT NULL
+    callback VARCHAR(255) NOT NULL UNIQUE
 );
 
 CREATE TABLE channel (
     channel_id serial PRIMARY KEY,
-    name varchar(255) NOT NULL
+    name varchar(255) NOT NULL UNIQUE
 );
 
 CREATE TABLE consumer_channel(

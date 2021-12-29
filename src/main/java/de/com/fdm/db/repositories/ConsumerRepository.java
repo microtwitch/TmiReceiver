@@ -7,4 +7,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ConsumerRepository extends CrudRepository<Consumer, Long> {
+    Consumer findByCallback(String callback);
 }
