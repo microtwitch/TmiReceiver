@@ -30,6 +30,7 @@ public class ReceiverServiceImpl extends ReceiverGrpc.ReceiverImplBase {
         if (consumer != null) {
             consumer.addChannels(request.getChannelsList());
             this.consumerService.saveConsumer(consumer);
+            this.reader.joinChannels(consumer.getChannels());
 
             Empty response = Empty.newBuilder().build();
             responseObserver.onNext(response);
