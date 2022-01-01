@@ -9,15 +9,4 @@ services:
       POSTGRES_PASSWORD: test
       POSTGRES_USER: test
 
-  pgadmin:
-    image: dpage/pgadmin4
-    environment:
-      PGADMIN_DEFAULT_EMAIL: test@test.com
-      PGADMIN_DEFAULT_PASSWORD: test
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
-    ports:
-      - "8081:80"
-
-networks:
-  postgres:
-    driver: bridge
+# psql -h localhost -p 5432 -U test
