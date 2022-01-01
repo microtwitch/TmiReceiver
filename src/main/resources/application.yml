@@ -1,6 +1,6 @@
 spring:
   datasource:
     platform: postgres
-    url: "jdbc:postgresql://localhost:5432/microtwitch"
+    url: "jdbc:postgresql://localhost:5432/tmi-receiver"
     username: test
     password: test
