@@ -31,6 +31,12 @@ public class Consumer {
         }
     }
 
+    public void removeChannels(ProtocolStringList channels) {
+        for (String channel : channels) {
+            this.channels.removeIf(c -> c.getName().equals(channel));
+        }
+    }
+
     public Long getId() {
         return id;
     }

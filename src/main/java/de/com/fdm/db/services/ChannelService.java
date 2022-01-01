@@ -28,4 +28,8 @@ public class ChannelService {
     public Set<Consumer> findByChannel(String channel) {
         return this.channelRepository.findByName(channel).getConsumers();
     }
+
+    public void delete(Channel channel) {
+        this.channelRepository.delete(channel);
+    }
 }

@@ -52,4 +52,8 @@ public class Reader {
             this.client.getChat().joinChannel(channel.getName());
         }
     }
+
+    public void partChannel(String channel) {
+        this.client.getChat().leaveChannel(channel);
+    }
 }

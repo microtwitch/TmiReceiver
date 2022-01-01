@@ -13,7 +13,7 @@ CREATE TABLE channel (
 );
 
 CREATE TABLE consumer_channel(
-    consumer_id int REFERENCES consumer (consumer_id) ON UPDATE CASCADE,
-    channel_id int REFERENCES channel (channel_id) ON UPDATE CASCADE,
+    consumer_id int REFERENCES consumer (consumer_id),
+    channel_id int REFERENCES channel (channel_id),
     CONSTRAINT consumer_channel_pkey PRIMARY KEY (consumer_id, channel_id)
 );

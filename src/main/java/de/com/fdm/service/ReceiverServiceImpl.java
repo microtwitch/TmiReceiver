@@ -2,6 +2,7 @@ package de.com.fdm.service;
 
 import de.com.fdm.db.data.Channel;
 import de.com.fdm.db.data.Consumer;
+import de.com.fdm.db.services.ChannelService;
 import de.com.fdm.db.services.ConsumerService;
 import de.com.fdm.grpc.receiver.lib.Empty;
 import de.com.fdm.grpc.receiver.lib.ReceiverGrpc;
@@ -20,6 +21,9 @@ public class ReceiverServiceImpl extends ReceiverGrpc.ReceiverImplBase {
 
     @Autowired
     private ConsumerService consumerService;
+
+    @Autowired
+    private ChannelService channelService;
 
     @Autowired
     private Reader reader;
@@ -48,8 +52,33 @@ public class ReceiverServiceImpl extends ReceiverGrpc.ReceiverImplBase {
         consumer.setChannels(channels);
 
         this.consumerService.saveConsumer(consumer);
-
         this.reader.joinChannels(channels);
+
+        Empty response = Empty.newBuilder().build();
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void unsubscribe(Registration request, StreamObserver<Empty> responseObserver) {
+        Consumer consumer = this.consumerService.findByCallback(request.getCallback());
+
+        if (consumer == null) {
+            Empty response = Empty.newBuilder().build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+            return;
+        }
+
+        consumer.removeChannels(request.getChannelsList());
+        this.consumerService.saveConsumer(consumer);
+
+        for (Channel channel : channelService.getAll()) {
+            if (channel.getConsumers().size() == 0) {
+                this.reader.partChannel(channel.getName());
+                channelService.delete(channel);
+            }
+        }
 
         Empty response = Empty.newBuilder().build();
         responseObserver.onNext(response);
