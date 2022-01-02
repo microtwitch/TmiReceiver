@@ -34,7 +34,8 @@ public class Reader {
     private void handleChannelMessage(ChannelMessageEvent event) {
         TwitchMessage msg = TwitchMessage.newBuilder()
                 .setChannel(event.getChannel().getName())
-                .setName(event.getUser().getName())
+                .setUserName(event.getUser().getName())
+                .setUserId(event.getUser().getId())
                 .setText(event.getMessage()).build();
 
         Set<Consumer> consumers = this.channelService.findByChannel(event.getChannel().getName());
