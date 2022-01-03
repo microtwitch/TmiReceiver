@@ -1,9 +1,5 @@
 package de.com.fdm.main;
 
-import de.com.fdm.db.data.Channel;
-import de.com.fdm.db.data.Consumer;
-import de.com.fdm.db.repositories.ChannelRepository;
-import de.com.fdm.db.repositories.ConsumerRepository;
 import de.com.fdm.db.services.ChannelService;
 import de.com.fdm.tmi.Reader;
 import org.springframework.beans.factory.annotation.Autowired;
