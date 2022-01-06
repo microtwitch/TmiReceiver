@@ -7,8 +7,9 @@ import de.com.fdm.client.ClientManager;
 import de.com.fdm.db.data.Channel;
 import de.com.fdm.db.data.Consumer;
 import de.com.fdm.db.services.ChannelService;
-import de.com.fdm.db.services.ConsumerService;
 import de.com.fdm.grpc.receiver.lib.TwitchMessage;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -20,15 +21,18 @@ public class Reader {
     private final ClientManager clientManager;
 
     @Autowired
-    private ConsumerService consumerService;
-
-    @Autowired
     private ChannelService channelService;
 
-    public Reader() {
+    public Reader(MeterRegistry registry) {
         this.client = TwitchClientBuilder.builder().withEnableChat(true).build();
         this.client.getEventManager().onEvent(ChannelMessageEvent.class, this::handleChannelMessage);
         this.clientManager = new ClientManager();
+
+        Gauge.builder("reader.channels", this::getChannelCount).strongReference(true).register(registry);
+    }
+
+    private int getChannelCount() {
+        return this.client.getChat().getChannels().size();
     }
 
     private void handleChannelMessage(ChannelMessageEvent event) {
