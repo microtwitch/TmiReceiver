@@ -17,7 +17,6 @@ public class ClientManager {
         }
 
         ConsumerClient client = this.clients.get(callback);
-
         client.sendMessage(msg);
     }
 }
