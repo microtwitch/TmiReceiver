@@ -8,6 +8,7 @@ import de.com.fdm.db.data.Channel;
 import de.com.fdm.db.data.Consumer;
 import de.com.fdm.db.services.ChannelService;
 import de.com.fdm.grpc.receiver.lib.TwitchMessage;
+import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,7 @@ import java.util.Set;
 public class Reader {
     private final TwitchClient client;
     private final ClientManager clientManager;
+    private final Counter msgCounter;
 
     @Autowired
     private ChannelService channelService;
@@ -29,6 +31,7 @@ public class Reader {
         this.clientManager = new ClientManager();
 
         Gauge.builder("reader.channels", this::getChannelCount).strongReference(true).register(registry);
+        this.msgCounter = Counter.builder("reader.messages").register(registry);
     }
 
     private int getChannelCount() {
@@ -47,6 +50,8 @@ public class Reader {
         for (Consumer consumer : consumers) {
             this.clientManager.sendMessage(msg, consumer.getCallback());
         }
+
+        msgCounter.increment();
     }
 
     public void joinChannels(Set<Channel> channels) {
