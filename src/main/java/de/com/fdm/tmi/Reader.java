@@ -26,16 +26,16 @@ public class Reader {
     private ChannelService channelService;
 
     public Reader(MeterRegistry registry) {
-        this.client = TwitchClientBuilder.builder().withEnableChat(true).build();
-        this.client.getEventManager().onEvent(ChannelMessageEvent.class, this::handleChannelMessage);
-        this.clientManager = new ClientManager();
+        client = TwitchClientBuilder.builder().withEnableChat(true).build();
+        client.getEventManager().onEvent(ChannelMessageEvent.class, this::handleChannelMessage);
+        clientManager = new ClientManager();
 
         Gauge.builder("reader.channels", this::getChannelCount).strongReference(true).register(registry);
-        this.msgCounter = Counter.builder("reader.messages").register(registry);
+        msgCounter = Counter.builder("reader.messages").register(registry);
     }
 
     private int getChannelCount() {
-        return this.client.getChat().getChannels().size();
+        return client.getChat().getChannels().size();
     }
 
     private void handleChannelMessage(ChannelMessageEvent event) {
@@ -45,10 +45,10 @@ public class Reader {
                 .setUserId(event.getUser().getId())
                 .setText(event.getMessage()).build();
 
-        Set<Consumer> consumers = this.channelService.findByChannel(event.getChannel().getName());
+        Set<Consumer> consumers = channelService.findByChannel(event.getChannel().getName());
 
         for (Consumer consumer : consumers) {
-            this.clientManager.sendMessage(msg, consumer.getCallback());
+            clientManager.sendMessage(msg, consumer.getCallback());
         }
 
         msgCounter.increment();
@@ -56,14 +56,14 @@ public class Reader {
 
     public void joinChannels(Set<Channel> channels) {
         for (Channel channel : channels) {
-            if (this.client.getChat().getChannels().contains(channel.getName())) {
+            if (client.getChat().getChannels().contains(channel.getName())) {
                 continue;
             }
-            this.client.getChat().joinChannel(channel.getName());
+            client.getChat().joinChannel(channel.getName());
         }
     }
 
     public void partChannel(String channel) {
-        this.client.getChat().leaveChannel(channel);
+        client.getChat().leaveChannel(channel);
     }
 }

@@ -13,10 +13,10 @@ public class ConsumerService {
     private ConsumerRepository consumerRepository;
 
     public void saveConsumer(Consumer consumer) {
-        this.consumerRepository.save(consumer);
+        consumerRepository.save(consumer);
     }
 
     public Consumer findByCallback(String callback) {
-        return this.consumerRepository.findByCallback(callback);
+        return consumerRepository.findByCallback(callback);
     }
 }

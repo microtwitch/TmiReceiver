@@ -1,7 +1,10 @@
 package de.com.fdm.main;
 
+import de.com.fdm.db.repositories.ConsumerRepository;
 import de.com.fdm.db.services.ChannelService;
 import de.com.fdm.tmi.Reader;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -22,12 +25,23 @@ public class Application {
     @Autowired
     private ChannelService channelService;
 
+    @Autowired
+    private ConsumerRepository consumerRepository;
+
+    @Autowired
+    private MeterRegistry registry;
+
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
     }
 
     @EventListener(ApplicationReadyEvent.class)
     public void readInitialChannels() {
-        this.reader.joinChannels(this.channelService.getAll());
+        reader.joinChannels(this.channelService.getAll());
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void addMetrics() {
+        Gauge.builder("consumers_count", consumerRepository::count).strongReference(true).register(registry);
     }
 }
