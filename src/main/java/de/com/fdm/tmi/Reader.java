@@ -1,7 +1,8 @@
 package de.com.fdm.tmi;
 
-import com.github.twitch4j.TwitchClient;
-import com.github.twitch4j.TwitchClientBuilder;
+import com.github.twitch4j.chat.TwitchChat;
+import com.github.twitch4j.chat.TwitchChatBuilder;
+import com.github.twitch4j.chat.events.channel.ChannelMessageActionEvent;
 import com.github.twitch4j.chat.events.channel.ChannelMessageEvent;
 import de.com.fdm.client.ClientManager;
 import de.com.fdm.db.data.Channel;
@@ -18,7 +19,7 @@ import java.util.Set;
 
 @Component
 public class Reader {
-    private final TwitchClient client;
+    private final TwitchChat client;
     private final ClientManager clientManager;
     private final Counter msgCounter;
 
@@ -26,8 +27,9 @@ public class Reader {
     private ChannelService channelService;
 
     public Reader(MeterRegistry registry) {
-        client = TwitchClientBuilder.builder().withEnableChat(true).build();
+        client = TwitchChatBuilder.builder().build();
         client.getEventManager().onEvent(ChannelMessageEvent.class, this::handleChannelMessage);
+        client.getEventManager().onEvent(ChannelMessageActionEvent.class, this::handleMeMessage);
         clientManager = new ClientManager();
 
         Gauge.builder("reader.channels", this::getChannelCount).strongReference(true).register(registry);
@@ -35,7 +37,7 @@ public class Reader {
     }
 
     private int getChannelCount() {
-        return client.getChat().getChannels().size();
+        return client.getChannels().size();
     }
 
     private void handleChannelMessage(ChannelMessageEvent event) {
@@ -54,16 +56,27 @@ public class Reader {
         msgCounter.increment();
     }
 
+    private void handleMeMessage(ChannelMessageActionEvent event) {
+        ChannelMessageEvent messageEvent = new ChannelMessageEvent(
+                event.getChannel(),
+                event.getMessageEvent(),
+                event.getUser(),
+                event.getMessage(),
+                event.getPermissions()
+        );
+        this.handleChannelMessage(messageEvent);
+    }
+
     public void joinChannels(Set<Channel> channels) {
         for (Channel channel : channels) {
-            if (client.getChat().getChannels().contains(channel.getName())) {
+            if (client.getChannels().contains(channel.getName())) {
                 continue;
             }
-            client.getChat().joinChannel(channel.getName());
+            client.joinChannel(channel.getName());
         }
     }
 
     public void partChannel(String channel) {
-        client.getChat().leaveChannel(channel);
+        client.leaveChannel(channel);
     }
 }
