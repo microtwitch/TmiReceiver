@@ -20,17 +20,18 @@ import java.util.Set;
 @Component
 public class Reader {
     private final TwitchChat client;
-    private final ClientManager clientManager;
     private final Counter msgCounter;
 
     @Autowired
     private ChannelService channelService;
 
+    @Autowired
+    private ClientManager clientManager;
+
     public Reader(MeterRegistry registry) {
         client = TwitchChatBuilder.builder().build();
         client.getEventManager().onEvent(ChannelMessageEvent.class, this::handleChannelMessage);
         client.getEventManager().onEvent(ChannelMessageActionEvent.class, this::handleMeMessage);
-        clientManager = new ClientManager();
 
         Gauge.builder("reader.channels", this::getChannelCount).strongReference(true).register(registry);
         msgCounter = Counter.builder("reader.messages").register(registry);

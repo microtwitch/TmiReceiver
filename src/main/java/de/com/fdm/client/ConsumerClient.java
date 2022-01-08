@@ -7,9 +7,11 @@ import io.grpc.ManagedChannelBuilder;
 
 public class ConsumerClient {
     private final ConsumerGrpc.ConsumerStub asyncStub;
+    private EmptyCallback emptyCallback;
 
-    public ConsumerClient(String target) {
+    public ConsumerClient(String target, EmptyCallback emptyCallback) {
         this(ManagedChannelBuilder.forTarget(target).usePlaintext());
+        this.emptyCallback = emptyCallback;
     }
 
     private ConsumerClient(ManagedChannelBuilder<?> channelBuilder) {
@@ -18,6 +20,6 @@ public class ConsumerClient {
     }
 
     public void sendMessage(TwitchMessage msg) {
-        this.asyncStub.consume(msg, new EmptyCallback());
+        this.asyncStub.consume(msg, emptyCallback);
     }
 }
