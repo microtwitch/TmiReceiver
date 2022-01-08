@@ -10,7 +10,7 @@ COPY build.gradle .
 COPY gradle gradle
 COPY src src
 
-RUN gradle build
+RUN gradle build -x test
 
 FROM bellsoft/liberica-openjdk-alpine:latest
 COPY --from=builder /home/gradle/build/libs/*.jar app.jar
