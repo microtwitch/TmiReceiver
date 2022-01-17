@@ -41,7 +41,7 @@ dependencies {
 
     testImplementation('org.junit.jupiter:junit-jupiter-api:5.8.2')
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.8.2")
-    testImplementation('io.grpc:grpc-testing:1.42.1')
+    testImplementation('io.grpc:grpc-testing:1.43.2')
     testImplementation("org.springframework.boot:spring-boot-starter-test:${springBootVersion}") {
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
         exclude group: 'org.junit', module: 'junit'
