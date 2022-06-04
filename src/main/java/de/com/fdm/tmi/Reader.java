@@ -7,6 +7,7 @@ import com.github.twitch4j.chat.TwitchChatBuilder;
 import com.github.twitch4j.chat.events.channel.ChannelMessageActionEvent;
 import com.github.twitch4j.chat.events.channel.ChannelMessageEvent;
 import org.redisson.Redisson;
+import org.redisson.api.RSet;
 import org.redisson.api.RTopic;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
@@ -24,6 +25,10 @@ import java.util.concurrent.ArrayBlockingQueue;
 @Component
 public class Reader {
     private static final Logger LOG = LoggerFactory.getLogger(Reader.class);
+
+    // if this many messages don't get picked up by a client, the channel gets parted
+    private static final int GRACE_PERIOD = 100;
+    private static final String CHANNELS_KEY = "channels";
     private final TwitchChat twitchChat;
     private final RedissonClient redissonClient;
     private final ObjectMapper mapper;
@@ -41,6 +46,8 @@ public class Reader {
         twitchChat = TwitchChatBuilder.builder().build();
         twitchChat.getEventManager().onEvent(ChannelMessageEvent.class, this::handleChannelMessage);
         twitchChat.getEventManager().onEvent(ChannelMessageActionEvent.class, this::handleMeMessage);
+
+        joinSavedChannels();
     }
 
     private void handleChannelMessage(ChannelMessageEvent event) {
@@ -50,12 +57,12 @@ public class Reader {
         RTopic topic = redissonClient.getTopic("tmiReceiver." + event.getChannel().getName());
         try {
             if (!isChannelUsed(channel)) {
-                twitchChat.leaveChannel(channel);
+                leaveChannel(channel);
             }
 
             long numClients = topic.publish(mapper.writeValueAsString(twitchMessageDto));
 
-            if (channelUsageHistory.get(channel).size() == 5) {
+            if (channelUsageHistory.get(channel).size() == GRACE_PERIOD) {
                 channelUsageHistory.get(channel).remove();
             }
             channelUsageHistory.get(channel).add(numClients);
@@ -65,7 +72,7 @@ public class Reader {
     }
 
     private boolean isChannelUsed(String channel) {
-        if (channelUsageHistory.get(channel).size() != 5) {
+        if (channelUsageHistory.get(channel).size() != GRACE_PERIOD) {
             return true;
         }
 
@@ -91,8 +98,26 @@ public class Reader {
     // twitch4j handles joining the same chat multiple times
     // the join gets ignored in that case!
     public void joinChannel(String channel) {
-        channelUsageHistory.put(channel, new ArrayBlockingQueue<>(5));
+        channelUsageHistory.put(channel, new ArrayBlockingQueue<>(GRACE_PERIOD));
+
+        RSet<String> channels = redissonClient.getSet(CHANNELS_KEY);
+        channels.add(channel);
 
         twitchChat.joinChannel(channel);
+    }
+
+    private void leaveChannel(String channel) {
+        RSet<String> channels = redissonClient.getSet(CHANNELS_KEY);
+        channels.remove(channel);
+
+        twitchChat.leaveChannel(channel);
+    }
+
+    private void joinSavedChannels() {
+        RSet<String> channels = redissonClient.getSet(CHANNELS_KEY);
+
+        for (String channel : channels) {
+            joinChannel(channel);
+        }
     }
 }
