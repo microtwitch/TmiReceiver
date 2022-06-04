@@ -1,60 +1,51 @@
 package de.com.fdm.tmi;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.twitch4j.chat.TwitchChat;
 import com.github.twitch4j.chat.TwitchChatBuilder;
 import com.github.twitch4j.chat.events.channel.ChannelMessageActionEvent;
 import com.github.twitch4j.chat.events.channel.ChannelMessageEvent;
-import de.com.fdm.client.ClientManager;
-import de.com.fdm.db.data.Channel;
-import de.com.fdm.db.data.Consumer;
-import de.com.fdm.db.services.ChannelService;
-import de.com.fdm.grpc.receiver.lib.TwitchMessage;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
+import org.redisson.Redisson;
+import org.redisson.api.RTopic;
+import org.redisson.api.RedissonClient;
+import org.redisson.config.Config;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.Set;
+import java.io.File;
+import java.io.IOException;
 
 @Component
 public class Reader {
-    private final TwitchChat client;
-    private final Counter msgCounter;
+    private static final Logger LOG = LoggerFactory.getLogger(Reader.class);
+    private final TwitchChat twitchChat;
+    private final RedissonClient redissonClient;
+    private final ObjectMapper mapper;
 
     @Autowired
-    private ChannelService channelService;
+    public Reader() throws IOException {
+        this.mapper = new ObjectMapper();
 
-    @Autowired
-    private ClientManager clientManager;
+        Config config = Config.fromYAML(new File("src/main/resources/redisson_config.yaml"));
+        this.redissonClient = Redisson.create(config);
 
-    public Reader(MeterRegistry registry) {
-        client = TwitchChatBuilder.builder().build();
-        client.getEventManager().onEvent(ChannelMessageEvent.class, this::handleChannelMessage);
-        client.getEventManager().onEvent(ChannelMessageActionEvent.class, this::handleMeMessage);
-
-        Gauge.builder("reader.channels", this::getChannelCount).strongReference(true).register(registry);
-        msgCounter = Counter.builder("reader.messages").register(registry);
-    }
-
-    private int getChannelCount() {
-        return client.getChannels().size();
+        twitchChat = TwitchChatBuilder.builder().build();
+        twitchChat.getEventManager().onEvent(ChannelMessageEvent.class, this::handleChannelMessage);
+        twitchChat.getEventManager().onEvent(ChannelMessageActionEvent.class, this::handleMeMessage);
     }
 
     private void handleChannelMessage(ChannelMessageEvent event) {
-        TwitchMessage msg = TwitchMessage.newBuilder()
-                .setChannel(event.getChannel().getName())
-                .setUserName(event.getUser().getName())
-                .setUserId(event.getUser().getId())
-                .setText(event.getMessage()).build();
+        TwitchMessageDto twitchMessageDto = TwitchMessageDto.fromEvent(event);
 
-        Set<Consumer> consumers = channelService.findByChannel(event.getChannel().getName());
-
-        for (Consumer consumer : consumers) {
-            clientManager.sendMessage(msg, consumer.getCallback());
+        RTopic topic = redissonClient.getTopic("tmiReceiver." + event.getChannel().getName());
+        try {
+            topic.publish(mapper.writeValueAsString(twitchMessageDto));
+        } catch (JsonProcessingException e) {
+            LOG.error(e.getMessage());
         }
-
-        msgCounter.increment();
     }
 
     private void handleMeMessage(ChannelMessageActionEvent event) {
@@ -68,16 +59,7 @@ public class Reader {
         this.handleChannelMessage(messageEvent);
     }
 
-    public void joinChannels(Set<Channel> channels) {
-        for (Channel channel : channels) {
-            if (client.getChannels().contains(channel.getName())) {
-                continue;
-            }
-            client.joinChannel(channel.getName());
-        }
-    }
-
-    public void partChannel(String channel) {
-        client.leaveChannel(channel);
+    public void joinChannel(String channel) {
+        twitchChat.joinChannel(channel);
     }
 }
