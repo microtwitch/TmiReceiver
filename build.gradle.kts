@@ -20,6 +20,7 @@ dependencies {
     implementation("io.micrometer:micrometer-registry-prometheus:1.9.0")
     implementation("org.springframework.boot:spring-boot-starter-actuator:2.7.0")
     implementation("org.springframework.boot:spring-boot-starter-web:2.7.0")
+    implementation("org.springframework.boot:spring-boot-starter-aop:2.7.0")
 }
 
 tasks.withType<Test> {
