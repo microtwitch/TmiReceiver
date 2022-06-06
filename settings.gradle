@@ -1,7 +1,0 @@
-rootProject.name = 'TmiReceiver'
-
-sourceControl {
-    gitRepository("https://github.com/microtwitch/TmiReceiverInterface.git") {
-        producesModule("de.com.fdm:TmiReceiverInterface")
-    }
-}

@@ -1,7 +1,7 @@
 FROM gradle:7.3.3-jdk17-alpine AS builder
 
-COPY settings.gradle .
-COPY build.gradle .
+COPY settings.gradle.kts .
+COPY build.gradle.kts .
 COPY gradle gradle
 COPY src src
 

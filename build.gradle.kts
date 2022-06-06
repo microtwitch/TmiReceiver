@@ -1,11 +1,11 @@
-
 plugins {
-    id 'java'
-    id 'org.springframework.boot' version "2.6.2"
+    id("org.springframework.boot") version "2.6.6"
+    kotlin("jvm") version "1.6.21"
+    kotlin("plugin.spring") version "1.6.21"
 }
 
-group 'de.com.fdm'
-version '1.0-SNAPSHOT'
+group "de.com.fdm"
+version "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -18,6 +18,6 @@ dependencies {
     implementation("org.redisson:redisson:3.17.1")
 }
 
-test {
+tasks.withType<Test> {
     useJUnitPlatform()
 }
