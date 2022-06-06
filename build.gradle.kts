@@ -17,6 +17,9 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter:2.6.7")
     implementation("com.github.twitch4j:twitch4j:1.9.0")
     implementation("org.redisson:redisson:3.17.1")
+    implementation("io.micrometer:micrometer-registry-prometheus:1.9.0")
+    implementation("org.springframework.boot:spring-boot-starter-actuator:2.7.0")
+    implementation("org.springframework.boot:spring-boot-starter-web:2.7.0")
 }
 
 tasks.withType<Test> {
