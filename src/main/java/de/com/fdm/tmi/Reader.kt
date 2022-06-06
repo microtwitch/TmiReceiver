@@ -45,8 +45,8 @@ class Reader @Autowired constructor(
         val twitchMessageDto = TwitchMessageDto(event)
         val channel = twitchMessageDto.channel
         if (!isChannelUsed(channel)) {
+            log.info("Channel #{} is not used.", channel)
             leaveChannel(channel)
-            log.info("Left channel #{} due to inactivity.", channel)
             return
         }
         val numClients = redisService.publishMessage(twitchMessageDto)
@@ -92,6 +92,7 @@ class Reader @Autowired constructor(
     private fun leaveChannel(channel: String) {
         redisService.removeChannel(channel)
         twitchChat.leaveChannel(channel)
+        log.info("Left channel #{}.", channel)
     }
 
     fun joinSavedChannels() {
