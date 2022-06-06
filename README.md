@@ -1,7 +1,8 @@
 # TMI Receiver
 
-Reads Twitch Chat and sends messages to clients via gRPC.
+Reads Twitch Chat and sends messages to clients via redis pub/sub.
 
 ## Usage
 
-View [TmiReceiverInterface](https://github.com/microtwitch/TmiReceiverInterface) for protobuf bindings. 
+Clients can request channels by sending SUBSCRIBE tmiReceiver {channel}
+The messages then get published to tmiReceiver.{channel}
