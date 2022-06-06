@@ -2,6 +2,7 @@ plugins {
     id("org.springframework.boot") version "2.6.6"
     kotlin("jvm") version "1.6.21"
     kotlin("plugin.spring") version "1.6.21"
+    id("org.sonarqube") version "3.3"
 }
 
 group "de.com.fdm"
@@ -20,4 +21,12 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+sonarqube {
+    properties {
+        property("sonar.projectKey", "microtwitch_dukebot")
+        property("sonar.organization", "microtwitch")
+        property("sonar.host.url", "https://sonarcloud.io")
+    }
 }
