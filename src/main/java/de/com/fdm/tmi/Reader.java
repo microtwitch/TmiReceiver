@@ -41,7 +41,6 @@ public class Reader {
         TwitchMessageDto twitchMessageDto = TwitchMessageDto.fromEvent(event);
         String channel = twitchMessageDto.channel();
 
-        LOG.info("{}", channelUsageHistory.get(channel));
         if (!isChannelUsed(channel)) {
             leaveChannel(channel);
             LOG.info("Left channel #{} due to inactivity.", channel);
