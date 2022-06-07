@@ -2,9 +2,7 @@ package de.com.fdm.tmi
 
 import com.github.twitch4j.chat.TwitchChat
 import com.github.twitch4j.chat.TwitchChatBuilder
-import com.github.twitch4j.chat.events.channel.ChannelJoinEvent
 import com.github.twitch4j.chat.events.channel.ChannelJoinFailureEvent
-import com.github.twitch4j.chat.events.channel.ChannelLeaveEvent
 import com.github.twitch4j.chat.events.channel.ChannelMessageActionEvent
 import com.github.twitch4j.chat.events.channel.ChannelMessageEvent
 import de.com.fdm.redis.RedisListener
@@ -17,6 +15,7 @@ import org.redisson.config.Config
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.io.File
 import java.util.Queue
@@ -55,17 +54,14 @@ class Reader @Autowired constructor(
                 event: ChannelMessageActionEvent -> handleActionMessage(event)
         }
 
-        twitchChat.eventManager.onEvent(ChannelJoinEvent::class.java) {
-            channelGauge.incrementAndGet()
-        }
-
-        twitchChat.eventManager.onEvent(ChannelLeaveEvent::class.java) {
-            channelGauge.decrementAndGet()
-        }
-
         twitchChat.eventManager.onEvent(ChannelJoinFailureEvent::class.java) {
             joinFailureGauge.incrementAndGet()
         }
+    }
+
+    @Scheduled(fixedRate = 5000, initialDelay = 5000)
+    fun updateChannelGauge() {
+        channelGauge.set(twitchChat.channels.size)
     }
 
     private fun handleMessage(event: ChannelMessageEvent) {

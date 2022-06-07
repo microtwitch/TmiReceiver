@@ -8,8 +8,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.boot.runApplication
 import org.springframework.context.event.EventListener
+import org.springframework.scheduling.annotation.EnableScheduling
 
 
+@EnableScheduling
 @SpringBootApplication(scanBasePackages = ["de.com.fdm.*"])
 class Application @Autowired constructor(val reader: Reader, val redisListener: RedisListener) {
     private val log = LoggerFactory.getLogger(Application::class.java)
