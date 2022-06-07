@@ -2,6 +2,9 @@ package de.com.fdm.tmi
 
 import com.github.twitch4j.chat.TwitchChat
 import com.github.twitch4j.chat.TwitchChatBuilder
+import com.github.twitch4j.chat.events.channel.ChannelJoinEvent
+import com.github.twitch4j.chat.events.channel.ChannelJoinFailureEvent
+import com.github.twitch4j.chat.events.channel.ChannelLeaveEvent
 import com.github.twitch4j.chat.events.channel.ChannelMessageActionEvent
 import com.github.twitch4j.chat.events.channel.ChannelMessageEvent
 import de.com.fdm.redis.RedisListener
@@ -34,6 +37,7 @@ class Reader @Autowired constructor(
                                     .description("Times how long it takes to handle message received from twitch")
                                     .register(meterRegistry)
     private val channelGauge: AtomicInteger
+    private val joinFailureGauge: AtomicInteger
 
 
     init {
@@ -42,12 +46,25 @@ class Reader @Autowired constructor(
 
         this.twitchChat = TwitchChatBuilder.builder().build()
         this.channelGauge = meterRegistry.gauge("tmiReceiver.channels.gauge", AtomicInteger(0))!!
+        this.joinFailureGauge = meterRegistry.gauge("tmiReceiver.joinFailure.gauge", AtomicInteger(0))!!
         twitchChat.eventManager.onEvent(ChannelMessageEvent::class.java) {
                 event: ChannelMessageEvent -> timer.record { handleMessage(event) }
         }
 
         twitchChat.eventManager.onEvent(ChannelMessageActionEvent::class.java) {
                 event: ChannelMessageActionEvent -> handleActionMessage(event)
+        }
+
+        twitchChat.eventManager.onEvent(ChannelJoinEvent::class.java) {
+            channelGauge.incrementAndGet()
+        }
+
+        twitchChat.eventManager.onEvent(ChannelLeaveEvent::class.java) {
+            channelGauge.decrementAndGet()
+        }
+
+        twitchChat.eventManager.onEvent(ChannelJoinFailureEvent::class.java) {
+            joinFailureGauge.incrementAndGet()
         }
     }
 
@@ -96,7 +113,6 @@ class Reader @Autowired constructor(
         redisService.addChannel(channel)
         twitchChat.joinChannel(channel)
 
-        channelGauge.incrementAndGet()
         log.info("Joined channel #{}.", channel)
     }
 
@@ -104,7 +120,6 @@ class Reader @Autowired constructor(
         redisService.removeChannel(channel)
         twitchChat.leaveChannel(channel)
         log.info("Left channel #{}.", channel)
-        channelGauge.decrementAndGet()
     }
 
     fun joinSavedChannels() {
