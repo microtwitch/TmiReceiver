@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component
 import java.io.File
 import java.util.Queue
 import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.atomic.AtomicInteger
 
 @Component
 class Reader @Autowired constructor(
@@ -32,12 +33,15 @@ class Reader @Autowired constructor(
     private val timer = Timer.builder("tmiReceiver.handleMessage.timer")
                                     .description("Times how long it takes to handle message received from twitch")
                                     .register(meterRegistry)
+    private val channelGauge: AtomicInteger
+
 
     init {
         val config = Config.fromYAML(File("src/main/resources/redisson_config.yaml"))
         this.client = Redisson.create(config)
 
         this.twitchChat = TwitchChatBuilder.builder().build()
+        this.channelGauge = meterRegistry.gauge("tmiReceiver.channels.gauge", AtomicInteger(0))!!
         twitchChat.eventManager.onEvent(ChannelMessageEvent::class.java) {
                 event: ChannelMessageEvent -> timer.record { handleMessage(event) }
         }
@@ -92,6 +96,7 @@ class Reader @Autowired constructor(
         redisService.addChannel(channel)
         twitchChat.joinChannel(channel)
 
+        channelGauge.incrementAndGet()
         log.info("Joined channel #{}.", channel)
     }
 
@@ -99,6 +104,7 @@ class Reader @Autowired constructor(
         redisService.removeChannel(channel)
         twitchChat.leaveChannel(channel)
         log.info("Left channel #{}.", channel)
+        channelGauge.decrementAndGet()
     }
 
     fun joinSavedChannels() {
