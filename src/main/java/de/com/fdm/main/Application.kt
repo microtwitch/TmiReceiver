@@ -1,7 +1,7 @@
 package de.com.fdm.main
 
-import de.com.fdm.redis.RedisListener
-import de.com.fdm.tmi.Reader
+import de.com.fdm.core.LoadBalancer
+import de.com.fdm.core.RedisListener
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.SpringBootApplication
@@ -13,14 +13,16 @@ import org.springframework.scheduling.annotation.EnableScheduling
 
 @EnableScheduling
 @SpringBootApplication(scanBasePackages = ["de.com.fdm.*"])
-class Application @Autowired constructor(val reader: Reader, val redisListener: RedisListener) {
+class Application @Autowired constructor(
+    private val redisListener: RedisListener,
+    private val loadBalancer: LoadBalancer,
+) {
     private val log = LoggerFactory.getLogger(Application::class.java)
 
     @EventListener(ApplicationReadyEvent::class)
     fun init() {
-        log.info("Joining saved channels...")
-        reader.joinSavedChannels()
-        redisListener.setUpCallback()
+        loadBalancer.initReaders()
+        redisListener.start()
     }
 }
 
