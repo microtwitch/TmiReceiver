@@ -5,11 +5,14 @@ import com.github.twitch4j.chat.TwitchChatBuilder
 import com.github.twitch4j.chat.events.channel.ChannelMessageActionEvent
 import com.github.twitch4j.chat.events.channel.ChannelMessageEvent
 import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.Tags
 import io.micrometer.core.instrument.Timer
 import org.slf4j.LoggerFactory
+import org.springframework.scheduling.annotation.Scheduled
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicInteger
 
 class Reader constructor(
     private val deduplicator: Deduplicator,
@@ -24,6 +27,7 @@ class Reader constructor(
         .tag("reader", id.toString())
         .register(meterRegistry)
     private var whenLastJoin: Instant
+    private val channelGauge = meterRegistry.gauge("tmiReceiver.channels.gauge", Tags.of("reader", id.toString()), AtomicInteger(0))!!
 
     init {
         whenLastJoin = Instant.now()
@@ -34,6 +38,11 @@ class Reader constructor(
         twitchChat.eventManager.onEvent(ChannelMessageActionEvent::class.java) {
                 event: ChannelMessageActionEvent -> handleActionMessage(event)
         }
+    }
+
+    @Scheduled(fixedRate = 5000, initialDelay = 5000)
+    fun updateChannelGauge() {
+        channelGauge.set(twitchChat.channels.size)
     }
 
     private fun handleMessage(event: ChannelMessageEvent) {

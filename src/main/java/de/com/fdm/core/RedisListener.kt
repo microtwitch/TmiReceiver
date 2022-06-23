@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.io.File
 
+//TODO: offload channels if load gets too high over time
 @Service
 class RedisListener @Autowired constructor(
     private val loadBalancer: LoadBalancer,

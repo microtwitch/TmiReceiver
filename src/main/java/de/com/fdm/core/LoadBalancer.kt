@@ -19,7 +19,7 @@ class LoadBalancer @Autowired constructor(
     )!!
 
     fun initReaders() {
-       for (i in 0..50) {
+       for (i in 0..10) {
            readers.add(Reader(deduplicator, meterRegistry))
        }
     }

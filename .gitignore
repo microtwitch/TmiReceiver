@@ -3,3 +3,4 @@
 /build
 src/main/resources/application.yml
 src/main/resources/redisson_config.yaml
+main.py
