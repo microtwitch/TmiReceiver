@@ -9,6 +9,7 @@ import kotlinx.coroutines.*
 import kotlin.concurrent.timer
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Tags
+import io.micrometer.core.instrument.Timer
 import java.time.Instant
 import java.time.Duration
 import java.util.UUID
@@ -29,6 +30,10 @@ class Reader constructor(
     private val channels = mutableMapOf<String, Boolean>()
     private var whenLastJoin: Instant
 
+    private val timer = Timer.builder("tmiReceiver.handleMessage.timer")
+        .description("Times how long it takes to handle message received from twitch")
+        .tag("reader", id.toString())
+        .register(meterRegistry)
     private val channelGauge = meterRegistry.gauge(
         "tmiReceiver.channels.gauge", Tags.of("reader", id.toString()), AtomicInteger(0))!!
 
@@ -123,7 +128,7 @@ class Reader constructor(
                 if (!line.startsWith(":justinfan6969") && !line.startsWith(":tmi.twitch.tv")) {
                     val twitchMessage = parseMessage(line)
                     if (twitchMessage != null) {
-                        handlePrivMessage(twitchMessage)
+                        timer.record { handlePrivMessage(twitchMessage) }
                     }
                 }
             }
@@ -133,6 +138,7 @@ class Reader constructor(
             val parts = line.split(" ")
             val channel = parts[3].removePrefix("#")
             channels[channel] = true
+
             channelGauge.incrementAndGet()
             joinCallback.invoke(channel)
         }

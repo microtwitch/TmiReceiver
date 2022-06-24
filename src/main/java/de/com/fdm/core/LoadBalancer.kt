@@ -12,7 +12,7 @@ class LoadBalancer @Autowired constructor(
     private val deduplicator: Deduplicator,
     private val meterRegistry: MeterRegistry,
 ){
-    private val log = LoggerFactory.getLogger(Reader::class.java)
+    private val log = LoggerFactory.getLogger(LoadBalancer::class.java)
     private val readers = meterRegistry.gaugeCollectionSize(
         "tmiReceiver.reader.gauge",
         Tags.empty(),
@@ -51,7 +51,6 @@ class LoadBalancer @Autowired constructor(
 
             if (reader.hasCapacity()) {
                 reader.join(channel)
-                log.info("Started join to {}", channel)
                 return
             }
         }
