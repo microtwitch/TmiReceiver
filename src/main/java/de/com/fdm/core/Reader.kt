@@ -103,25 +103,21 @@ class Reader constructor(
 
         override fun onMessage(webSocket: WebSocket, text: String) {
             for (line in text.lines()) {
-                if (line == ":tmi.twitch.tv 376 justinfan6969 :>") {
-                    isConnected = true
-                    connectCallback.invoke(id.toString())
-                }
-
-                if (line.startsWith(":justinfan6969.tmi.twitch.tv") && line.endsWith("list")) {
-                    val parts = line.split(" ")
-                    val channel = parts[3].removePrefix("#")
-                    channels[channel] = true
-                    channelGauge.incrementAndGet() 
-                    joinCallback.invoke(channel)
-                }
-
                 if (line.isBlank()) {
                     continue
                 }
 
                 if (line.startsWith("PING")) {
                     webSocket.send("PONG :tmi.twitch.tv")
+                }
+
+                if (line == ":tmi.twitch.tv 376 justinfan6969 :>") {
+                    isConnected = true
+                    connectCallback.invoke(id.toString())
+                }
+
+                if (line.startsWith(":justinfan6969.tmi.twitch.tv") && line.endsWith("list")) {
+                    handleJoin(line)
                 }
 
                 if (!line.startsWith(":justinfan6969") && !line.startsWith(":tmi.twitch.tv")) {
@@ -131,6 +127,14 @@ class Reader constructor(
                     }
                 }
             }
+        }
+
+        private fun handleJoin(line: String) {
+            val parts = line.split(" ")
+            val channel = parts[3].removePrefix("#")
+            channels[channel] = true
+            channelGauge.incrementAndGet()
+            joinCallback.invoke(channel)
         }
 
         private fun parseMessage(msg: String) : TwitchMessage? {
@@ -154,8 +158,8 @@ class Reader constructor(
 
                     return TwitchMessage(channel, userName, message, tags.toMap())
                 }
-                else -> {}
             }
+
             return null
         }
     }
