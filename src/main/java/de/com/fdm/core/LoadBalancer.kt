@@ -5,6 +5,7 @@ import io.micrometer.core.instrument.Tags
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import org.springframework.scheduling.annotation.Scheduled
 
 @Service
 class LoadBalancer @Autowired constructor(
@@ -19,9 +20,27 @@ class LoadBalancer @Autowired constructor(
     )!!
 
     fun initReaders() {
-       for (i in 0..10) {
-           readers.add(Reader(deduplicator, meterRegistry))
-       }
+        for (i in 0..10) {
+            val reader = Reader(meterRegistry)
+            reader.setMessageCallback(this::handleMessage)
+            reader.setJoinCallback(this::handleJoin)
+            reader.setConnectCallback(this::handleConnect)
+
+            reader.connect()
+            readers.add(reader)
+        }
+    }
+
+    private fun handleMessage(msg: TwitchMessage) {
+        deduplicator.handleMessage(msg)
+    }
+
+    private fun handleJoin(channel: String) {
+        log.info("Joined channel #{}", channel)
+    }
+
+    private fun handleConnect(readerId: String) {
+        log.info("Connected reader {}", readerId)
     }
 
     fun joinChannel(channel: String) {
@@ -29,8 +48,11 @@ class LoadBalancer @Autowired constructor(
             if (reader.readsChannel(channel)) {
                 return
             }
+
             if (reader.hasCapacity()) {
-                reader.joinChannel(channel)
+                reader.join(channel)
+                log.info("Started join to {}", channel)
+                return
             }
         }
     }

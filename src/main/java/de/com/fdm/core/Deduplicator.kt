@@ -20,13 +20,13 @@ class Deduplicator {
         this.client = Redisson.create(config)
     }
 
-    fun handleMessage(msg: TwitchMessageDto) {
+    fun handleMessage(msg: TwitchMessage) {
         val storedMsg = client.getSet<String>("messages")
-        if (storedMsg.contains(msg.msgId)) {
+        if (storedMsg.contains(msg.tags.getValue("id"))) {
             return;
         }
 
-        storedMsg.add(msg.msgId)
+        storedMsg.add(msg.tags.getValue("id"))
 
         val topic = client.getTopic("tmiReceiver." + msg.channel)
         try {

@@ -21,12 +21,17 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator:2.7.0")
     implementation("org.springframework.boot:spring-boot-starter-web:2.7.0")
     implementation("org.springframework.boot:spring-boot-starter-aop:2.7.0")
+    implementation("io.ktor:ktor-client-websocket:1.1.4")
 
     testImplementation(kotlin("test"))
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
+
+    this.testLogging {
+        this.showStandardStreams = true
+    }
 }
 
 sonarqube {
