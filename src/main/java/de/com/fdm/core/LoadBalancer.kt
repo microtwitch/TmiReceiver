@@ -57,6 +57,7 @@ class LoadBalancer @Autowired constructor(
             }
         }
 
-        log.info("No reader has capacity for channel: #{}", channel)
+        Thread.sleep(500)
+        joinChannel(channel)
     }
 }

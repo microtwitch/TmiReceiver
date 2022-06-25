@@ -93,6 +93,9 @@ class Reader constructor(
         socket.send("JOIN #$channel")
     }
 
+    // TODO: what happens if it dies?
+    // need a onDisconnect callback or something similar
+
     private fun handlePrivMessage(msg: TwitchMessage) {
         val it = recentMessages.entries.iterator()
         while (it.hasNext()) {
