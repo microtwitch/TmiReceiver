@@ -17,18 +17,21 @@ import java.util.concurrent.atomic.AtomicInteger
 import org.slf4j.LoggerFactory
 
 class Reader constructor(
-    private val meterRegistry: MeterRegistry
+    private val meterRegistry: MeterRegistry,
+    private val connectCallback: (readerId: String) -> Unit,
+    private val joinCallback: (channel: String) -> Unit,
+    private val messageCallback: (msg: TwitchMessage) -> Unit,
+    private val disconnectCallback: (readerId: String) -> Unit
 ) {
     private val log = LoggerFactory.getLogger(Reader::class.java)
-    private lateinit var connectCallback: (readerId: String) -> Unit
-    private lateinit var callback: (msg: TwitchMessage) -> Unit
-    private lateinit var joinCallback: (channel: String) -> Unit
     private lateinit var socket: WebSocket
     private val id = UUID.randomUUID()
     private val recentMessages = HashMap<Instant, String>()
     private var isConnected = false
     private val channels = mutableMapOf<String, Boolean>()
     private var whenLastJoin: Instant
+    private var whenLastPong: Instant
+    private lateinit var pingTimer: java.util.Timer
 
     private val timer = Timer.builder("tmiReceiver.handleMessage.timer")
         .description("Times how long it takes to handle message received from twitch")
@@ -39,6 +42,7 @@ class Reader constructor(
 
     init {
         whenLastJoin = Instant.now()
+        whenLastPong = Instant.now()
     }
 
     fun connect() {
@@ -48,7 +52,29 @@ class Reader constructor(
         val listener = TwitchWebSocketListener()
         socket = client.newWebSocket(request, listener)
 
-        timer("channelJoinStatusChecker", true, 1000, 1000) {
+        pingTimer = timer("pingTimer", true, 5000, 5000) {
+            val timeSinceLastPong= Duration.between(whenLastPong, Instant.now()).toSeconds()
+            if (timeSinceLastPong > 15) {
+                disconnectCallback.invoke(id.toString())
+                meterRegistry.remove(timer)
+
+                for (meter in meterRegistry.meters) {
+                    val meterId = meter.getId()
+                    if (meterId.getName() == "tmiReceiver.channels.gauge") {
+                        if (meterId.getTag("reader") == id.toString()) {
+                            log.info("removing metric...")
+                            meterRegistry.remove(meterId)
+                        }
+                    }
+                }
+
+                stopPingTimer()
+            }
+
+            sendPing()
+        }
+
+        timer("channelJoinerIfNotConnected", true, 1000, 1000) {
             for ((channel, isConnected) in channels) {
                 if (!isConnected) {
                     socket.send("JOIN #$channel")
@@ -57,16 +83,8 @@ class Reader constructor(
         }
     }
 
-    fun setMessageCallback(callback: (msg: TwitchMessage) -> Unit) {
-        this.callback = callback
-    }
-
-    fun setJoinCallback(callback: (channel: String) -> Unit) {
-        this.joinCallback = callback
-    }
-
-    fun setConnectCallback(callback: (readerId: String) -> Unit) {
-        this.connectCallback = callback;
+    private fun stopPingTimer() {
+        pingTimer.cancel()
     }
 
     fun readsChannel(channel: String) : Boolean{
@@ -80,11 +98,15 @@ class Reader constructor(
     fun hasCapacity() : Boolean {
         val timeSinceLastJoin = Duration.between(whenLastJoin, Instant.now()).toMillis()
 
-        if (getSpeed() < 150 && timeSinceLastJoin > 2000) {
+        if (getSpeed() < 150 && timeSinceLastJoin > 1000) {
             return true
         }
 
         return false
+    }
+
+    fun getId() : String {
+        return id.toString()
     }
 
     fun join(channel: String) {
@@ -93,8 +115,9 @@ class Reader constructor(
         socket.send("JOIN #$channel")
     }
 
-    // TODO: what happens if it dies?
-    // need a onDisconnect callback or something similar
+    private fun sendPing() {
+        socket.send("PING :tmi.twitch.tv")
+    }
 
     private fun handlePrivMessage(msg: TwitchMessage) {
         val it = recentMessages.entries.iterator()
@@ -105,7 +128,7 @@ class Reader constructor(
         }
 
         recentMessages[Instant.now()] = msg.tags.getValue("id")
-        callback.invoke(msg)
+        messageCallback.invoke(msg)
     }
 
     private inner class TwitchWebSocketListener : WebSocketListener() { 
@@ -123,6 +146,10 @@ class Reader constructor(
 
                 if (line.startsWith("PING")) {
                     webSocket.send("PONG :tmi.twitch.tv")
+                }
+
+                if (line.startsWith(":tmi.twitch.tv PONG")) {
+                    whenLastPong = Instant.now()
                 }
 
                 if (line == ":tmi.twitch.tv 376 justinfan6969 :>") {
