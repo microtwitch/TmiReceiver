@@ -20,7 +20,7 @@ class LoadBalancer @Autowired constructor(
     )!!
 
     fun initReaders() {
-        for (i in 0..10) {
+        for (i in 0..50) {
             val reader = Reader(meterRegistry)
             reader.setMessageCallback(this::handleMessage)
             reader.setJoinCallback(this::handleJoin)
@@ -48,11 +48,15 @@ class LoadBalancer @Autowired constructor(
             if (reader.readsChannel(channel)) {
                 return
             }
+        }
 
+        for (reader in readers) {
             if (reader.hasCapacity()) {
                 reader.join(channel)
                 return
             }
         }
+
+        log.info("No reader has capacity for channel: #{}", channel)
     }
 }

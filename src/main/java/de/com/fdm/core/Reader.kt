@@ -73,9 +73,14 @@ class Reader constructor(
         return channels.containsKey(channel)
     }
 
+    private fun getSpeed() : Float {
+        return (recentMessages.size.toFloat())/5
+    }
+
     fun hasCapacity() : Boolean {
         val timeSinceLastJoin = Duration.between(whenLastJoin, Instant.now()).toMillis()
-        if ((recentMessages.size/5) < 100 &&  timeSinceLastJoin > 5000) {
+
+        if (getSpeed() < 150 && timeSinceLastJoin > 2000) {
             return true
         }
 
@@ -83,6 +88,7 @@ class Reader constructor(
     }
 
     fun join(channel: String) {
+        whenLastJoin = Instant.now()
         channels.put(channel, false)
         socket.send("JOIN #$channel")
     }
@@ -137,8 +143,12 @@ class Reader constructor(
         private fun handleJoin(line: String) {
             val parts = line.split(" ")
             val channel = parts[3].removePrefix("#")
-            channels[channel] = true
 
+            if (channels[channel]!!) {
+                return
+            }
+
+            channels[channel] = true
             channelGauge.incrementAndGet()
             joinCallback.invoke(channel)
         }
